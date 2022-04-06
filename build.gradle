@@ -1,0 +1,64 @@
+plugins {
+    id 'java'
+    id 'checkstyle'
+    id "io.freefair.lombok" version "6.4.1"
+    id 'jacoco'
+}
+
+group 'org.creditsusse'
+version '1.0-SNAPSHOT'
+
+
+def cucumberVersion = '7.2.3'
+def junitVersion = '5.8.2'
+def junitSuiteVersion = '1.8.2'
+def guiceVersion = '5.1.0'
+def guavaVersion = '31.1-jre'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "com.google.inject:guice:${guiceVersion}"
+    implementation "com.google.guava:guava:${guavaVersion}"
+
+    testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
+    testImplementation "org.junit.platform:junit-platform-suite:${junitSuiteVersion}"
+
+    testImplementation "io.cucumber:cucumber-java:${cucumberVersion}"
+    implementation "io.cucumber:cucumber-guice:${cucumberVersion}"
+    testImplementation "io.cucumber:cucumber-junit-platform-engine:${cucumberVersion}"
+}
+
+test {
+    finalizedBy jacocoTestReport // report is always generated after tests run
+
+    useJUnitPlatform() {
+        excludeTags("Disabled")
+    }
+
+    // cucumber options
+    systemProperty("cucumber.junit-platform.naming-strategy", "long")
+    systemProperty("cucumber.execution.parallel.enabled", true)
+    systemProperty("cucumber.plugin", "timeline:build/reports/tests/timeline, html:build/reports/tests/cucumber.html")
+    systemProperty("cucumber.publish.quiet", "true")
+    systemProperty("cucumber.execution.exclusive-resources.Isolated.read-write", "org.junit.platform.engine.support.hierarchical.ExclusiveResource.GLOBAL_KEY")
+}
+
+checkstyle {
+    toolVersion '10.1'
+    configFile file('config/checkstyle/google_checks.xml')
+    configProperties = [
+            "org.checkstyle.google.suppressionfilter.config":
+                    "$projectDir/config/checkstyle/google_checks_suppressions.xml",
+    ]
+}
+
+tasks.withType(Checkstyle) {
+    reports {
+        xml.required = false
+        html.required = true
+    }
+}
